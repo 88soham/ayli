@@ -1,9 +1,15 @@
 from __future__ import print_function
 from builtins import input
+import PIL
+from PIL import Image
+from PIL import ImageEnhance
+from PIL import ImageStat
 import cv2 as cv
 import numpy as np
 import argparse
 import copy
+
+dir = "C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\ayli\\Samples\\"
     
 def Display(image, windowName):
     window = cv.namedWindow(windowName, cv.WINDOW_NORMAL)
@@ -13,23 +19,13 @@ def Display(image, windowName):
     
 def AdjustContrastAndBrightness(image, editedImage):
     # Initialize values
-    alphaDark = 1.5 # Simple contrast control for darker pixels
-    betaDark = 50    # Simple brightness control for darker pixels
+    alphaDark = 1.5 # Simple contrast control for darker pixels [1.0-3.0]
+    betaDark = 50    # Simple brightness control for darker pixels [0-100]
     alphaBright = 0.75  # Simple contrast control for brighter pixels
     betaBright = -20    # Simple brightness control for brighter pixels
     
     thresholdBright = 220
     thresholdDark = 35
-    
-    '''
-    print(' Basic Linear Transforms ')
-    print('-------------------------')
-    try:
-        alpha = float(input('* Enter the alpha value [1.0-3.0]: '))
-        beta = int(input('* Enter the beta value [0-100]: '))
-    except ValueError:
-        print('Error, not a number')
-    '''
     
     # Do the operation image(i,j) = alpha*image(i,j) + beta
     # Instead of these 'for' loops we could have used simply:
@@ -50,43 +46,93 @@ def AdjustContrastAndBrightness(image, editedImage):
                     editedImage[y,x,1] = image[y,x,1]
                     editedImage[y,x,2] = image[y,x,2]
     
-def EqualizeHistogram(grayImage):
-    img = cv.imread('input.jpg')
+    return editedImage
     
 def EqualizeHistogramColored(img):
     img_yuv = cv.cvtColor(img, cv.COLOR_BGR2YUV)
-
     # equalize the histogram of the Y channel
     img_yuv[:,:,0] = cv.equalizeHist(img_yuv[:,:,0])
-
     # convert the YUV image back to RGB format
     img_output = cv.cvtColor(img_yuv, cv.COLOR_YUV2BGR)
+    # Display(img_output, 'Histogram equalized')
+    return img_output
 
-    Display(img_output, 'Histogram equalized')
-
-def Clahe(bgr, gridSize):
-    lab = cv.cvtColor(bgr, cv.COLOR_BGR2LAB)
+def Clahe(img, gridSize):
+    lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
     lab_planes = cv.split(lab)
     clahe = cv.createCLAHE(clipLimit=2.0,tileGridSize=(gridSize,gridSize))
     lab_planes[0] = clahe.apply(lab_planes[0])
     lab = cv.merge(lab_planes)
-    bgr = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
-    Display(bgr, 'CLAHE with gridSize ' + str(gridSize))
-                
+    img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
+    #Display(img, 'CLAHE with gridSize ' + str(gridSize))
+    return img
+  
+def EnhanceColors(img, enhancement):
+    '''
+    img = cv.cvtColor(img,cv.COLOR_BGR2HSV)
+    img[...,1] = img[...,1]*enhancement
+    img=cv.cvtColor(img,cv.COLOR_HSV2BGR)
+    '''
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    imgPil = Image.fromarray(img)
+    converter = PIL.ImageEnhance.Color(imgPil)
+    imgPil2 = converter.enhance(enhancement)
+    imgPil3 = imgPil2.convert('RGB')
+    imgCV = np.array(imgPil3)
+    imgCV = imgCV[:, :, ::-1].copy()
+    
+    return imgCV
+  
+def ChangeImageBrightness(img):
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    imgPil = Image.fromarray(img)
+    
+    #Find brightness of image
+    temp = imgPil.convert('L')
+    stat = ImageStat.Stat(temp)
+    brightness = (stat.mean[0]/255)
+    print(brightness)
+    
+    #Think this makes more sense
+    enhancer = ImageEnhance.Brightness(imgPil)
+    if brightness < 0.2:
+        imgPil = enhancer.enhance(2-brightness)
+    
+    imgCV = np.array(imgPil)
+    imgCV = imgCV[:, :, ::-1].copy()
+    
+    return imgCV
+  
+  
 #Main
 #===================================================================================
 
 #TODO Take the path from command line
-img = cv.imread("C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\Sample2_LoganPass.jpg")
+# img = cv.imread(dir + "Sample1_LoganPass.jpg")
+# img = cv.imread(dir + "Sample2_LoganPass.jpg")
+img = cv.imread(dir + "Sample3_LakeTahoe.jpg")
+# img = cv.imread(dir + "Sample4_HalfMoonBeach.jpg")
 Display(img, "Your Image")
 print(img.shape)
-# editedImg = np.zeros(img.shape, img.dtype)
-# editedImg = copy.copy(img)
+
+img = ChangeImageBrightness(img);
+Display(img, 'Brightened image')
+
+img = EnhanceColors(img, 2.0)
+Display(img, 'Enhanced colors')
+
 # EqualizeHistogramColored(img)
-Clahe(img, 4)
-Clahe(img, 8)
-Clahe(img, 16)
-# AdjustContrastAndBrightness(img, editedImg)
+img = Clahe(img, 4)
+# #img = Clahe(img, 8)
+# #img = Clahe(img, 16)
+Display(img, 'Clahe')
+
+# cv.imwrite(dir + "Sample1_LoganPass_Edited.jpg", img) 
+# cv.imwrite(dir + "Sample2_LoganPass_Edited.jpg", img)
+cv.imwrite(dir + "Sample3_LakeTahoe_Edited.jpg", img)
+# cv.imwrite(dir + "Sample4_HalfMoonBeach_Edited.jpg", img) 
+
+# img = AdjustContrastAndBrightness(img, editedImg)
 # Display(editedImg, "Edited Image")
 cv.destroyAllWindows()
 

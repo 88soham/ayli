@@ -13,7 +13,7 @@ def Display(image, windowName):
     
 def AdjustContrastAndBrightness(image, editedImage):
     # Initialize values
-    alphaDark = 1.25 # Simple contrast control for darker pixels
+    alphaDark = 1.5 # Simple contrast control for darker pixels
     betaDark = 50    # Simple brightness control for darker pixels
     alphaBright = 0.75  # Simple contrast control for brighter pixels
     betaBright = -20    # Simple brightness control for brighter pixels
@@ -33,7 +33,7 @@ def AdjustContrastAndBrightness(image, editedImage):
     
     # Do the operation image(i,j) = alpha*image(i,j) + beta
     # Instead of these 'for' loops we could have used simply:
-    # image = cv.convertScaleAbs(image, alpha=alpha, beta=beta)
+    # editedImage = cv.convertScaleAbs(editedImage, alpha=alphaDark, beta=betaDark)
     # but we wanted to show you how to access the pixels :)
     for y in range(image.shape[0]):
         for x in range(image.shape[1]):
@@ -49,22 +49,29 @@ def AdjustContrastAndBrightness(image, editedImage):
                     editedImage[y,x,0] = image[y,x,0]
                     editedImage[y,x,1] = image[y,x,1]
                     editedImage[y,x,2] = image[y,x,2]
-
+    
 def EqualizeHistogram(grayImage):
-    img = cv2.imread('input.jpg')
+    img = cv.imread('input.jpg')
+    
+def EqualizeHistogramColored(img):
+    img_yuv = cv.cvtColor(img, cv.COLOR_BGR2YUV)
 
-img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+    # equalize the histogram of the Y channel
+    img_yuv[:,:,0] = cv.equalizeHist(img_yuv[:,:,0])
 
-# equalize the histogram of the Y channel
-img_yuv[:,:,0] = cv2.equalizeHist(img_yuv[:,:,0])
+    # convert the YUV image back to RGB format
+    img_output = cv.cvtColor(img_yuv, cv.COLOR_YUV2BGR)
 
-# convert the YUV image back to RGB format
-img_output = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+    Display(img_output, 'Histogram equalized')
 
-cv2.imshow('Color input image', img)
-cv2.imshow('Histogram equalized', img_output)
-
-cv2.waitKey(0)
+def Clahe(bgr, gridSize):
+    lab = cv.cvtColor(bgr, cv.COLOR_BGR2LAB)
+    lab_planes = cv.split(lab)
+    clahe = cv.createCLAHE(clipLimit=2.0,tileGridSize=(gridSize,gridSize))
+    lab_planes[0] = clahe.apply(lab_planes[0])
+    lab = cv.merge(lab_planes)
+    bgr = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
+    Display(bgr, 'CLAHE with gridSize ' + str(gridSize))
                 
 #Main
 #===================================================================================
@@ -73,18 +80,14 @@ cv2.waitKey(0)
 img = cv.imread("C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\Sample2_LoganPass.jpg")
 Display(img, "Your Image")
 print(img.shape)
-
-editedImg = np.zeros(img.shape, img.dtype)
-'''
-grayImg = copy.copy(img)
-grayImg = cv.cvtColor(grayImg, cv.COLOR_BGR2GRAY)
-Display(grayImg, "Grayscale Image")
-EqualizeHistogram(grayImg)
-Display(grayImg, "Grayscale HistogramEqualized Image")
-'''  
-AdjustContrastAndBrightness(img, editedImg)
-Display(editedImg, "Edited Image")
-
+# editedImg = np.zeros(img.shape, img.dtype)
+# editedImg = copy.copy(img)
+# EqualizeHistogramColored(img)
+Clahe(img, 4)
+Clahe(img, 8)
+Clahe(img, 16)
+# AdjustContrastAndBrightness(img, editedImg)
+# Display(editedImg, "Edited Image")
 cv.destroyAllWindows()
 
 #====================================================================================

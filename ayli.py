@@ -10,6 +10,7 @@ import argparse
 import copy
 import os
 import sys
+import time
 
 #dir = "C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\ayli\\Samples\\"
     
@@ -93,7 +94,7 @@ def ChangeImageBrightness(img):
     temp = imgPil.convert('L')
     stat = ImageStat.Stat(temp)
     brightness = (stat.mean[0]/255)
-    print(brightness)
+    print("Brightness metric (Mean_pixel_value/255): " + str(brightness))
     
     #Think this makes more sense
     enhancer = ImageEnhance.Brightness(imgPil)
@@ -144,7 +145,8 @@ def EditImage(dir, filename):
 #Main
 #===================================================================================
 
-#TODO Take the path from command line
+start_time = time.time()
+
 dir = input("Please provide the dir with unedited images: ")
 if not dir.endswith("\\"):
     dir = dir + "\\"
@@ -155,5 +157,6 @@ for filename in os.listdir(dir):
         continue
     else:
         continue
-
+        
+print("--- %s seconds ---" % (time.time() - start_time))
 #====================================================================================

@@ -8,14 +8,16 @@ import cv2 as cv
 import numpy as np
 import argparse
 import copy
+import os
+import sys
 
-dir = "C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\ayli\\Samples\\"
+#dir = "C:\\Users\\sodas\\Desktop\\Hackathon\\2019\\ayli\\Samples\\"
     
 def Display(image, windowName):
     window = cv.namedWindow(windowName, cv.WINDOW_NORMAL)
     cv.resizeWindow(windowName, 900, 600)
     cv.imshow(windowName, image)
-    cv.waitKey(0)
+    # cv.waitKey(0)
     
 def AdjustContrastAndBrightness(image, editedImage):
     # Initialize values
@@ -64,7 +66,7 @@ def Clahe(img, gridSize):
     lab_planes[0] = clahe.apply(lab_planes[0])
     lab = cv.merge(lab_planes)
     img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
-    #Display(img, 'CLAHE with gridSize ' + str(gridSize))
+    # Display(img, 'CLAHE with gridSize ' + str(gridSize))
     return img
   
 def EnhanceColors(img, enhancement):
@@ -102,38 +104,56 @@ def ChangeImageBrightness(img):
     imgCV = imgCV[:, :, ::-1].copy()
     
     return imgCV
-  
+
+def EditImage(dir, filename):
+    # img = cv.imread(dir + "Sample1_LoganPass.jpg")
+    # img = cv.imread(dir + "Sample2_LoganPass.jpg")
+    # img = cv.imread(dir + "Sample3_LakeTahoe.jpg")
+    # img = cv.imread(dir + "Sample4_HalfMoonBeach.jpg")
+    # img = cv.imread(dir + "Sample5_Josephine.jpg")
+    img = cv.imread(dir + filename)
+    print(dir + filename)
+    Display(img, "Your Image")
+    print(img.shape)
+
+    img = ChangeImageBrightness(img);
+    # Display(img, 'Brightened image')
+
+    img = EnhanceColors(img, 2.0)
+    # Display(img, 'Enhanced colors')
+
+    # EqualizeHistogramColored(img)
+    img = Clahe(img, 4)
+    # #img = Clahe(img, 8)
+    # #img = Clahe(img, 16)
+    Display(img, 'Clahe')
+
+    # cv.imwrite(dir + "Sample1_LoganPass_Edited.jpg", img) 
+    # cv.imwrite(dir + "Sample2_LoganPass_Edited.jpg", img)
+    # cv.imwrite(dir + "Sample3_LakeTahoe_Edited.jpg", img)
+    # cv.imwrite(dir + "Sample4_HalfMoonBeach_Edited.jpg", img)
+    outputPath = dir + "Edited\\" + "Edited_" + filename
+    print("Writing to " + outputPath)
+    cv.imwrite(outputPath, img) 
+
+    # img = AdjustContrastAndBrightness(img, editedImg)
+    # Display(editedImg, "Edited Image")
+    cv.destroyAllWindows()
+
   
 #Main
 #===================================================================================
 
 #TODO Take the path from command line
-# img = cv.imread(dir + "Sample1_LoganPass.jpg")
-# img = cv.imread(dir + "Sample2_LoganPass.jpg")
-img = cv.imread(dir + "Sample3_LakeTahoe.jpg")
-# img = cv.imread(dir + "Sample4_HalfMoonBeach.jpg")
-Display(img, "Your Image")
-print(img.shape)
-
-img = ChangeImageBrightness(img);
-Display(img, 'Brightened image')
-
-img = EnhanceColors(img, 2.0)
-Display(img, 'Enhanced colors')
-
-# EqualizeHistogramColored(img)
-img = Clahe(img, 4)
-# #img = Clahe(img, 8)
-# #img = Clahe(img, 16)
-Display(img, 'Clahe')
-
-# cv.imwrite(dir + "Sample1_LoganPass_Edited.jpg", img) 
-# cv.imwrite(dir + "Sample2_LoganPass_Edited.jpg", img)
-cv.imwrite(dir + "Sample3_LakeTahoe_Edited.jpg", img)
-# cv.imwrite(dir + "Sample4_HalfMoonBeach_Edited.jpg", img) 
-
-# img = AdjustContrastAndBrightness(img, editedImg)
-# Display(editedImg, "Edited Image")
-cv.destroyAllWindows()
+dir = input("Please provide the dir with unedited images: ")
+if not dir.endswith("\\"):
+    dir = dir + "\\"
+os.mkdir(dir + "Edited")
+for filename in os.listdir(dir):
+    if filename.endswith(".jpg"): 
+        EditImage(dir, filename)
+        continue
+    else:
+        continue
 
 #====================================================================================

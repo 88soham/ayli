@@ -6,3 +6,4 @@ https://garagehackbox.azurewebsites.net/hackathons/1857/projects/84512
 3. Input images and output dir through cmd line DONE
 4. Straighten images
 5. Watermark?
+6. Multithreading DONE
